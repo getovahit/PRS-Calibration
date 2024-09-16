@@ -1,3 +1,4 @@
+
 import numpy as np
 from scipy.optimize import minimize
 import pandas as pd
@@ -17,13 +18,23 @@ class PRSAncestryCalibration:
         mu = alpha[0] + np.dot(pcs, alpha[1:])
         sigma = np.exp(beta[0] + np.dot(pcs, beta[1:]))
         
-        return np.sum(np.log(sigma) + 0.5 * ((prs - mu) / sigma) ** 2)
+        # Adding a small constant to sigma to avoid division by zero
+        epsilon = 1e-8
+        sigma = np.maximum(sigma, epsilon)
+        
+        # Computing the negative log likelihood
+        nll = np.sum(np.log(sigma) + 0.5 * ((prs - mu) / sigma) ** 2)
+        
+        return nll
 
     def fit(self, prs, pcs):
+        if prs is None or pcs is None:
+            raise ValueError("PRS and PCs data must be provided.")
+        
         pcs_scaled = self.scaler.fit_transform(pcs)
         initial_params = np.zeros(2 * (self.n_pcs + 1))
-        result = minimize(self.negative_log_likelihood, initial_params, args=(prs, pcs_scaled),
-                          method='BFGS')
+        
+        result = minimize(self.negative_log_likelihood, initial_params, args=(prs, pcs_scaled), method='BFGS')
         self.params = result.x
 
     def calculate_z_score(self, prs, pcs):
@@ -37,7 +48,14 @@ class PRSAncestryCalibration:
         mu = alpha[0] + np.dot(pcs_scaled, alpha[1:])
         sigma = np.exp(beta[0] + np.dot(pcs_scaled, beta[1:]))
         
-        return (prs - mu) / sigma
+        # Adding a small constant to sigma to avoid division by zero
+        epsilon = 1e-8
+        sigma = np.maximum(sigma, epsilon)
+        
+        # Calculate z-scores
+        z_scores = (prs - mu) / sigma
+        
+        return z_scores
 
 def load_data(prs_file, pc_file):
     prs_data = pd.read_csv(prs_file)
@@ -58,22 +76,15 @@ def main():
     prs, pcs = load_data(prs_file, pc_file)
     
     # Initialize and fit the model
-    n_pcs = pcs.shape[1]  # Number of PCs in your data
-    model = PRSAncestryCalibration(n_pcs)
-    model.fit(prs, pcs)
+    n_pcs = pcs.shape[1]  # Number of principal components
+    prs_calibrator = PRSAncestryCalibration(n_pcs)
+    prs_calibrator.fit(prs, pcs)
     
-    # Calculate calibrated z-scores
-    z_scores = model.calculate_z_score(prs, pcs)
+    # Calculate z-scores for individuals
+    z_scores = prs_calibrator.calculate_z_score(prs, pcs)
     
-    # Save results
-    results = pd.DataFrame({
-        'sample_id': pd.read_csv(prs_file)['sample_id'],
-        'raw_prs': prs,
-        'calibrated_z_score': z_scores
-    })
-    results.to_csv('calibrated_prs_results.csv', index=False)
-    
-    print("Calibration complete. Results saved to 'calibrated_prs_results.csv'")
+    # Output z-scores
+    print("Z-scores:", z_scores)
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
