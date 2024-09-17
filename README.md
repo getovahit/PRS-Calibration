@@ -48,7 +48,7 @@ Before you begin, ensure you have met the following requirements:
 3. **Install the required packages:**
 
    ```bash
-   pip install numpy scipy pandas scikit-learn
+   pip install click numpy scipy pandas scikit-learn
    ```
 
 ## Data Preparation
