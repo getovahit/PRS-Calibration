@@ -65,20 +65,24 @@ def load_data(prs_file, pc_file):
     # Extract PRS values
     prs = merged_data['PRS'].values
     
-    # Extract PC columns (assuming they are named 'PC1', 'PC2', ..., 'PCn')
+    # Extract PC columns
     pc_columns = [col for col in merged_data.columns if col.startswith('PC')]
     if not pc_columns:
         raise ValueError("No PC columns found in the data.")
     pcs = merged_data[pc_columns].values
     
-    return prs, pcs
+    # Extract sample IDs
+    sample_ids = merged_data['sample_id'].values
+    
+    # Return prs, pcs, and sample_ids
+    return prs, pcs, sample_ids
 
 def main():
     # Load your data
-    prs_file = 'path/to/your/prs_data.csv'  # Replace with your actual file path
-    pc_file = 'path/to/your/pc_data.csv'    # Replace with your actual file path
+    prs_file = 'prs_data.csv'  # Replace with your actual file path
+    pc_file = 'pc_data.csv'    # Replace with your actual file path
     
-    prs, pcs = load_data(prs_file, pc_file)
+    prs, pcs, sample_ids = load_data(prs_file, pc_file)
     
     # Initialize and fit the model
     n_pcs = pcs.shape[1]  # Number of principal components
@@ -90,7 +94,7 @@ def main():
     
     # Output z-scores with sample IDs
     output_df = pd.DataFrame({
-        'sample_id': merged_data['sample_id'],
+        'sample_id': sample_ids,
         'z_score': z_scores
     })
     output_df.to_csv('z_scores_output.csv', index=False)
