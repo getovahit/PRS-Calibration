@@ -1,4 +1,3 @@
-
 import numpy as np
 from scipy.optimize import minimize
 import pandas as pd
@@ -11,7 +10,6 @@ class PRSAncestryCalibration:
         self.scaler = StandardScaler()
 
     def negative_log_likelihood(self, params, prs, pcs):
-        n = len(prs)
         alpha = params[:self.n_pcs + 1]
         beta = params[self.n_pcs + 1:]
         
@@ -61,17 +59,24 @@ def load_data(prs_file, pc_file):
     prs_data = pd.read_csv(prs_file)
     pc_data = pd.read_csv(pc_file)
     
-    # Ensure the order of samples is the same in both files
-    common_samples = prs_data.index.intersection(pc_data.index)
-    prs_data = prs_data.loc[common_samples]
-    pc_data = pc_data.loc[common_samples]
+    # Merge the data on 'sample_id' to ensure correct alignment
+    merged_data = pd.merge(prs_data, pc_data, on='sample_id')
     
-    return prs_data['PRS'].values, pc_data.values
+    # Extract PRS values
+    prs = merged_data['PRS'].values
+    
+    # Extract PC columns (assuming they are named 'PC1', 'PC2', ..., 'PCn')
+    pc_columns = [col for col in merged_data.columns if col.startswith('PC')]
+    if not pc_columns:
+        raise ValueError("No PC columns found in the data.")
+    pcs = merged_data[pc_columns].values
+    
+    return prs, pcs
 
 def main():
     # Load your data
-    prs_file = 'path/to/your/prs_data.csv'  # CSV with columns: sample_id, PRS
-    pc_file = 'path/to/your/pc_data.csv'    # CSV with columns: sample_id, PC1, PC2, ..., PCn
+    prs_file = 'path/to/your/prs_data.csv'  # Replace with your actual file path
+    pc_file = 'path/to/your/pc_data.csv'    # Replace with your actual file path
     
     prs, pcs = load_data(prs_file, pc_file)
     
@@ -83,8 +88,13 @@ def main():
     # Calculate z-scores for individuals
     z_scores = prs_calibrator.calculate_z_score(prs, pcs)
     
-    # Output z-scores
-    print("Z-scores:", z_scores)
+    # Output z-scores with sample IDs
+    output_df = pd.DataFrame({
+        'sample_id': merged_data['sample_id'],
+        'z_score': z_scores
+    })
+    output_df.to_csv('z_scores_output.csv', index=False)
+    print("Z-scores have been saved to 'z_scores_output.csv'.")
 
 if __name__ == '__main__':
     main()
