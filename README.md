@@ -96,22 +96,11 @@ Your input data should be in CSV format. You need two separate files:
 
 ## Usage
 
-1. Place your prepared `prs_data.csv` and `pc_data.csv` files in the same directory as the script.
-
-2. Update the file paths in the `main` function of the script:
-
-   ```python
-   prs_file = 'prs_data.csv'  # Path to your PRS data file
-   pc_file = 'pc_data.csv'    # Path to your PC data file
-   ```
-
-3. Run the script:
+Execute the script by providing the paths to the PRS and PCs data files. You can also optionally modify the output file path (by default, it is saved in the same folder as the running script):
 
    ```bash
-   python prs_ancestry_calibration.py
+   python prs_ancestry_calibration.py --prs-file=/path/to/prs_data.csv --pc-file=/path/to/pc_data.csv --out-file=z_scores_output.csv
    ```
-
-The script will process your data and output the results to `calibrated_prs_results.csv` in the same directory.
 
 ## Output
 
@@ -119,7 +108,7 @@ The output file `calibrated_prs_results.csv` will contain:
 
 - `sample_id`: The original sample identifier
 - `raw_prs`: The original, uncalibrated PRS
-- `calibrated_z_score`: The ancestry-calibrated PRS z-score
+- `z_score`: The ancestry-calibrated PRS z-score
 
 ## Customization
 
