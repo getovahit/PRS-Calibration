@@ -1,5 +1,6 @@
 # PRS-Calibration
-Ancestry Adjusted PRS calibration
+Ancestry Adjusted PRS Calibration
+
 # PRS Ancestry Calibration Tool
 
 ## Table of Contents
@@ -11,8 +12,9 @@ Ancestry Adjusted PRS calibration
 6. [Output](#output)
 7. [Customization](#customization)
 8. [Troubleshooting](#troubleshooting)
-9. [Contributing](#contributing)
-10. [License](#license)
+9. [Additional Tips](#additional-tips)
+10. [Contributing](#contributing)
+11. [License](#license)
 
 ## Introduction
 
@@ -29,20 +31,23 @@ Before you begin, ensure you have met the following requirements:
 
 ## Installation
 
-1. Clone this repository or download the source code:
-   ```
+1. **Clone this repository or download the source code:**
+
+   ```bash
    git clone https://github.com/your-username/prs-ancestry-calibration.git
    cd prs-ancestry-calibration
    ```
 
-2. Create a virtual environment (optional but recommended):
-   ```
+2. **Create a virtual environment (optional but recommended):**
+
+   ```bash
    python -m venv venv
    source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
    ```
 
-3. Install the required packages:
-   ```
+3. **Install the required packages:**
+
+   ```bash
    pip install numpy scipy pandas scikit-learn
    ```
 
@@ -50,57 +55,63 @@ Before you begin, ensure you have met the following requirements:
 
 Your input data should be in CSV format. You need two separate files:
 
-1. PRS Data File:
+1. **PRS Data File:**
    - Filename: `prs_data.csv`
    - Columns:
-     - `sample_id`: Unique identifier for each sample
-     - `PRS`: Raw PRS value for each sample
+     - `sample_id`: Unique identifier for each sample (must match between files)
+     - `PRS`: Raw PRS value for each sample (numeric)
 
    Example:
-   ```
+   ```csv
    sample_id,PRS
    SAMPLE001,0.5
    SAMPLE002,-0.2
    SAMPLE003,1.1
    ```
 
-2. PC Data File:
+2. **PC Data File:**
    - Filename: `pc_data.csv`
    - Columns:
      - `sample_id`: Unique identifier for each sample (must match PRS file)
-     - `PC1`, `PC2`, ..., `PCn`: Principal component values
+     - `PC1`, `PC2`, ..., `PCn`: Principal component values (numeric)
 
    Example:
-   ```
+   ```csv
    sample_id,PC1,PC2,PC3,PC4,PC5
    SAMPLE001,0.1,0.2,-0.1,0.05,0.3
    SAMPLE002,-0.2,0.1,0.3,-0.1,0.2
    SAMPLE003,0.3,-0.1,0.2,0.1,-0.2
    ```
 
-Ensure that:
-- Both files have a header row
-- The `sample_id` values match between the two files
-- There are no missing values
-- The order of samples doesn't need to be the same in both files, but all samples in the PRS file should have corresponding entries in the PC file
+**Important Notes:**
+- Both files must have a header row.
+- The `sample_id` values must match between the two files to ensure correct data alignment.
+- There should be no missing values in either file.
+- All values in the PRS and PC columns must be numeric (floats or integers).
+- The `sample_id` column should not be included in the numeric computations; ensure it is treated as a string identifier.
+
+**Data Alignment and Merging:**
+- The order of samples in the two files does not need to be the same; the script will merge the data based on `sample_id`.
+- Ensure that your `sample_id` values are unique and consistent across both files.
 
 ## Usage
 
 1. Place your prepared `prs_data.csv` and `pc_data.csv` files in the same directory as the script.
 
-2. Open the `prs_ancestry_calibration.py` file and update the file paths in the `main` function:
+2. Update the file paths in the `main` function of the script:
 
    ```python
-   prs_file = 'path/to/your/prs_data.csv'
-   pc_file = 'path/to/your/pc_data.csv'
+   prs_file = 'prs_data.csv'  # Path to your PRS data file
+   pc_file = 'pc_data.csv'    # Path to your PC data file
    ```
 
 3. Run the script:
-   ```
+
+   ```bash
    python prs_ancestry_calibration.py
    ```
 
-4. The script will process your data and output the results to `calibrated_prs_results.csv` in the same directory.
+The script will process your data and output the results to `calibrated_prs_results.csv` in the same directory.
 
 ## Output
 
@@ -112,31 +123,98 @@ The output file `calibrated_prs_results.csv` will contain:
 
 ## Customization
 
-- To change the number of PCs used for calibration, modify the `n_pcs` variable in the `main` function.
-- If your input files have different column names, update the `load_data` function accordingly.
-- To use a different optimization method, change the `method` parameter in the `minimize` function call within the `fit` method of the `PRSAncestryCalibration` class.
+1. **Number of PCs:**
+   To change the number of PCs used for calibration, modify the `n_pcs` variable in the `main` function:
+
+   ```python
+   n_pcs = pcs.shape[1]  # Use all PCs provided
+   # or set a specific number, e.g.,
+   n_pcs = 5  # Use only the first 5 PCs
+   ```
+
+2. **Column Names:**
+   If your input files have different column names, update the `load_data` function accordingly. For example, if your PRS column is named `PRS_value`, change:
+
+   ```python
+   prs = merged_data['PRS_value'].values
+   ```
+
+3. **Optimization Method:**
+   To use a different optimization method, change the `method` parameter in the `minimize` function call within the `fit` method of the `PRSAncestryCalibration` class.
 
 ## Troubleshooting
 
-1. **ImportError**: Make sure you've installed all required packages (`numpy`, `scipy`, `pandas`, `scikit-learn`).
+1. **ValueError: could not convert string to float: 'SAMPLE1'**
+   - Cause: The `sample_id` column containing strings is being included in the numeric computations.
+   - Solution: Ensure that only numeric columns are included when extracting `prs` and `pcs` values.
+   - Modify the `load_data` function to exclude `sample_id` from the numeric data.
 
-2. **FileNotFoundError**: Check that the file paths in the `main` function are correct and the CSV files are in the specified location.
+2. **Incorrect Method Definitions:**
+   - Ensure that special methods like `__init__` are defined with double underscores:
+     ```python
+     def __init__(self, n_pcs):
+         self.n_pcs = n_pcs
+         self.params = None
+         self.scaler = StandardScaler()
+     ```
 
-3. **ValueError: Model not fitted**: Ensure you're calling `fit` before `calculate_z_score`.
+3. **Script Not Executing Main Function:**
+   - Ensure the script ends with the correct `if __name__ == '__main__':` block:
+     ```python
+     if __name__ == '__main__':
+         main()
+     ```
 
-4. **Memory Issues**: For very large datasets, you may need to process the data in batches. Consider modifying the script to read and process data in chunks using `pandas.read_csv` with the `chunksize` parameter.
+4. **ImportError:**
+   - Make sure you've installed all required packages:
+     ```bash
+     pip install numpy scipy pandas scikit-learn
+     ```
 
-5. **Convergence Warnings**: If you see warnings about convergence, try increasing the maximum number of iterations in the `minimize` function or use a different optimization method.
+5. **FileNotFoundError:**
+   - Check that the file paths in the `main` function are correct and that the CSV files are in the specified location.
+
+6. **ValueError: Model not fitted. Call fit() first.**
+   - Ensure you're calling the `fit` method before `calculate_z_score`.
+
+7. **Data Consistency Errors:**
+   - Ensure all PRS and PC values are numeric and that there are no missing (NaN) values.
+
+8. **Memory Issues:**
+   - For very large datasets, consider processing data in chunks using `pandas.read_csv` with the `chunksize` parameter.
+
+9. **Convergence Warnings:**
+   - If you encounter convergence warnings during optimization, try increasing the maximum number of iterations or using a different optimization method in the `minimize` function.
+
+## Additional Tips
+
+1. **Testing with Sample Data:**
+   - Before running the script on your full dataset, test it with a small sample dataset to ensure everything works as expected.
+
+2. **Logging and Debugging:**
+   - Add print statements or logging to display intermediate values for debugging purposes.
+
+3. **Exception Handling:**
+   - Wrap code blocks in try-except statements to catch and handle exceptions gracefully.
+
+4. **Reproducibility:**
+   - Set a random seed at the beginning of your script if reproducibility is important:
+     ```python
+     np.random.seed(42)
+     ```
+
+5. **Data Verification:**
+   - Verify that the PC columns are correctly identified and that only numeric data is being processed.
 
 ## Contributing
 
 Contributions to improve the tool are welcome. Please follow these steps:
 
 1. Fork the repository
-2. Create a new branch (`git checkout -b feature/AmazingFeature`)
+2. Create a new branch (`git checkout -b feature/YourFeature`)
 3. Make your changes
-4. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-5. Push to the branch (`git push origin feature/AmazingFeature`)
+4. Commit your changes (`git commit -m 'Add YourFeature'`)
+5. Push to the branch (`git push origin feature/YourFeature`)
 6. Open a Pull Request
 
 ## License
