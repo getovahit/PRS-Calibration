@@ -14,10 +14,12 @@ def classify_risk(z_score_file, out_file, low_risk_percentile, high_risk_percent
     if 'z_score' not in z_scores_df.columns:
         raise ValueError("The input file must contain a 'z_score' column.")
     z_scores = z_scores_df['z_score'].values
+    mean = z_scores_df['z_score'].mean()
+    std = z_scores_df['z_score'].std()
 
     # Calculate the z-score cutoffs
-    low_cutoff = norm.ppf(low_risk_percentile / 100.0)
-    high_cutoff = norm.ppf(high_risk_percentile / 100.0)
+    low_cutoff = cutoff = norm.ppf(low_risk_percentile / 100.0, loc=mean, scale=std)
+    high_cutoff = norm.ppf(high_risk_percentile / 100.0, loc=mean, scale=std)
 
     print(f"The z-score cutoff for low risk (bottom {low_risk_percentile}%) is: {low_cutoff:.4f}")
     print(f"The z-score cutoff for high risk (top {100-high_risk_percentile}%) is: {high_cutoff:.4f}")
