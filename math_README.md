@@ -1,4 +1,3 @@
-
 # Polygenic Risk Score (PRS) Z-Score Calculation
 
 This project implements a method to calculate ancestry-adjusted z-scores for polygenic risk scores (PRS), accounting for population structure using principal components (PCs). The goal is to derive z-scores that reflect deviations in PRS from the population mean, adjusted for ancestral background.
@@ -9,66 +8,65 @@ This project implements a method to calculate ancestry-adjusted z-scores for pol
 
 Z-scores are a measure of how many standard deviations an element is from the mean. The formula for a basic z-score is:
 
-\[
-z = rac{{	ext{{PRS}} - \mu}}{{\sigma}}
-\]
+$$
+z = \frac{\text{PRS} - \mu}{\sigma}
+$$
 
 Where:
-- \(	ext{{PRS}}\) is the polygenic risk score for an individual.
-- \(\mu\) is the mean PRS of the population.
-- \(\sigma\) is the standard deviation of the PRS in the population.
+- $\text{PRS}$ is the polygenic risk score for an individual.
+- $\mu$ is the mean PRS of the population.
+- $\sigma$ is the standard deviation of the PRS in the population.
 
 However, for genetic data, population stratification can lead to biased PRS calculations if ancestral background is not considered. To adjust for this, we use principal components (PCs) that represent population structure.
 
 ### Adjusting for Ancestry Using Principal Components (PCs)
 
-In this method, the mean (\(\mu\)) and standard deviation (\(\sigma\)) of the PRS are modeled as functions of the principal components:
+In this method, the mean ($\mu$) and standard deviation ($\sigma$) of the PRS are modeled as functions of the principal components:
 
-\[
-\mu = lpha_0 + \sum_{i=1}^{n_{	ext{PCs}}} lpha_i \cdot 	ext{PC}_i
-\]
-\[
-\sigma = \exp(eta_0 + \sum_{i=1}^{n_{	ext{PCs}}} eta_i \cdot 	ext{PC}_i)
-\]
+$$
+\mu = \alpha_0 + \sum_{i=1}^{n_{\text{PCs}}} \alpha_i \cdot \text{PC}_i
+$$
+
+$$
+\sigma = \exp(\eta_0 + \sum_{i=1}^{n_{\text{PCs}}} \eta_i \cdot \text{PC}_i)
+$$
 
 Where:
-- \(lpha_0\) and \(eta_0\) are intercept terms.
-- \(lpha_i\) and \(eta_i\) are coefficients for the PCs.
-- \(	ext{PC}_i\) are the principal components for each individual, which capture ancestry-related variation.
+- $\alpha_0$ and $\eta_0$ are intercept terms.
+- $\alpha_i$ and $\eta_i$ are coefficients for the PCs.
+- $\text{PC}_i$ are the principal components for each individual, which capture ancestry-related variation.
 
 #### Negative Log-Likelihood (NLL)
 
-The parameters \(lpha\) and \(eta\) are estimated by minimizing the negative log-likelihood of the PRS data given the PCs:
+The parameters $\alpha$ and $\eta$ are estimated by minimizing the negative log-likelihood of the PRS data given the PCs:
 
-\[
-	ext{NLL} = \sum \left( \log(\sigma) + 0.5 \cdot \left(rac{{	ext{PRS} - \mu}}{{\sigma}}
-ight)^2 
-ight)
-\]
+$$
+\text{NLL} = \sum \left( \log(\sigma) + 0.5 \cdot \left(\frac{\text{PRS} - \mu}{\sigma}\right)^2 \right)
+$$
 
 This ensures that the model provides the best fit for the PRS values, accounting for ancestry.
 
 ### Fitting the Model
 
-The `fit()` method uses the `scipy.optimize.minimize` function to estimate the parameters \(lpha\) and \(eta\) by minimizing the NLL. This provides the best ancestry-adjusted estimates of the mean and standard deviation of PRS.
+The `fit()` method uses the `scipy.optimize.minimize` function to estimate the parameters $\alpha$ and $\eta$ by minimizing the NLL. This provides the best ancestry-adjusted estimates of the mean and standard deviation of PRS.
 
 ### Z-Score Calculation
 
 Once the model is fitted, we calculate z-scores for individuals as:
 
-\[
-z = rac{{	ext{PRS} - \mu}}{{\sigma}}
-\]
+$$
+z = \frac{\text{PRS} - \mu}{\sigma}
+$$
 
-Where \(\mu\) and \(\sigma\) are ancestry-adjusted based on the PCs.
+Where $\mu$ and $\sigma$ are ancestry-adjusted based on the PCs.
 
 ### Standardization of Z-Scores
 
 By default, the calculated z-scores are adjusted for population structure. If desired, the z-scores can be further standardized to have a global mean of 0 and standard deviation of 1 across the entire dataset:
 
-\[
-z_{	ext{standardized}} = rac{{z - 	ext{mean}(z)}}{{	ext{std}(z)}}
-\]
+$$
+z_{\text{standardized}} = \frac{z - \text{mean}(z)}{\text{std}(z)}
+$$
 
 This step ensures the z-scores follow a standard normal distribution.
 
@@ -80,7 +78,7 @@ The project contains the following main components:
 
 This class handles the calibration of PRS using principal components and the calculation of z-scores.
 
-- **`fit(prs, pcs)`**: Fits the model by estimating the parameters \(lpha\) and \(eta\) using the provided PRS values and PCs.
+- **`fit(prs, pcs)`**: Fits the model by estimating the parameters $\alpha$ and $\eta$ using the provided PRS values and PCs.
 - **`calculate_z_score(prs, pcs)`**: After fitting the model, calculates the z-scores for the provided PRS values and PCs.
 
 ### Load Data
@@ -142,8 +140,6 @@ The output will be a CSV file containing the sample IDs and their corresponding 
 | id2       | -0.98   |
 | ...       | ...     |
 
-
-
 ## Determining Percentile from Z-Score
 
 To determine what percentage of the population has a z-score below or above a specific value, such as 1.3, we can use the **cumulative distribution function (CDF)** of the standard normal distribution.
@@ -165,9 +161,9 @@ Let's say we have a z-score of **1.3**:
 - This means that about **90.32%** of the population has a z-score below **1.3**.
 - To find the proportion of the population above this z-score, you subtract it from 1:
   
-  \[
+  $$
   1 - CDF(1.3) = 1 - 0.9032 = 0.0968
-  \]
+  $$
   
   So, **9.68%** of the population has a z-score above 1.3.
 
