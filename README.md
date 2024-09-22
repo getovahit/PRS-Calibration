@@ -1,7 +1,5 @@
-# PRS-Calibration
-Ancestry Adjusted PRS Calibration
-
 # PRS Ancestry Calibration Tool
+Ancestry Adjusted PRS Calibration
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -18,7 +16,7 @@ Ancestry Adjusted PRS Calibration
 
 ## Introduction
 
-The PRS Ancestry Calibration Tool is a Python-based implementation of the method described in the paper [insert paper reference here]. This tool calibrates Polygenic Risk Scores (PRS) across different genetic ancestries, adjusting for both the mean and variance of PRS distributions based on principal components (PCs) of genetic ancestry.
+The PRS Ancestry Calibration Tool is a Python-based implementation of the method described in the paper [](https://www.nature.com/articles/s41591-024-02796-z#Sec10). This tool calibrates Polygenic Risk Scores (PRS) across different genetic ancestries, adjusting for both the mean and variance of PRS distributions based on principal components (PCs) of genetic ancestry.
 
 ## Prerequisites
 
@@ -104,10 +102,9 @@ Execute the script by providing the paths to the PRS and PCs data files. You can
 
 ## Output
 
-The output file `calibrated_prs_results.csv` will contain:
+The output file, specified by the `--out-file` option, will contain:
 
-- `sample_id`: The original sample identifier
-- `raw_prs`: The original, uncalibrated PRS
+- All original columns from both the PRS data file
 - `z_score`: The ancestry-calibrated PRS z-score
 
 ## Customization
@@ -122,10 +119,10 @@ The output file `calibrated_prs_results.csv` will contain:
    ```
 
 2. **Column Names:**
-   If your input files have different column names, update the `load_data` function accordingly. For example, if your PRS column is named `PRS_value`, change:
+   If your input files have different column names, update the command-line options accordingly. For example, if your PRS column is named `PRS_value`, use:
 
-   ```python
-   prs = merged_data['PRS_value'].values
+   ```bash
+   --prs-col=PRS_value
    ```
 
 3. **Optimization Method:**
@@ -133,46 +130,36 @@ The output file `calibrated_prs_results.csv` will contain:
 
 ## Troubleshooting
 
-1. **ValueError: could not convert string to float: 'SAMPLE1'**
-   - Cause: The `sample_id` column containing strings is being included in the numeric computations.
-   - Solution: Ensure that only numeric columns are included when extracting `prs` and `pcs` values.
-   - Modify the `load_data` function to exclude `sample_id` from the numeric data.
+1. **ValueError: No PC columns found in the data.**
+   - Cause: The prefix for PC columns in your file does not match the `pc_col_prefix` specified.
+   - Solution: Ensure that the correct prefix is provided using the `--pc-col-prefix` option.
 
-2. **Incorrect Method Definitions:**
-   - Ensure that special methods like `__init__` are defined with double underscores:
-     ```python
-     def __init__(self, n_pcs):
-         self.n_pcs = n_pcs
-         self.params = None
-         self.scaler = StandardScaler()
-     ```
-
-3. **Script Not Executing Main Function:**
+2. **Script Not Executing Main Function:**
    - Ensure the script ends with the correct `if __name__ == '__main__':` block:
      ```python
      if __name__ == '__main__':
          main()
      ```
 
-4. **ImportError:**
+3. **ImportError:**
    - Make sure you've installed all required packages:
      ```bash
-     pip install numpy scipy pandas scikit-learn
+     pip install -r requirements.txt
      ```
 
-5. **FileNotFoundError:**
+4. **FileNotFoundError:**
    - Check that the file paths in the `main` function are correct and that the CSV files are in the specified location.
 
-6. **ValueError: Model not fitted. Call fit() first.**
+5. **ValueError: Model not fitted. Call fit() first.**
    - Ensure you're calling the `fit` method before `calculate_z_score`.
 
-7. **Data Consistency Errors:**
+6. **Data Consistency Errors:**
    - Ensure all PRS and PC values are numeric and that there are no missing (NaN) values.
 
-8. **Memory Issues:**
+7**Memory Issues:**
    - For very large datasets, consider processing data in chunks using `pandas.read_csv` with the `chunksize` parameter.
 
-9. **Convergence Warnings:**
+8**Convergence Warnings:**
    - If you encounter convergence warnings during optimization, try increasing the maximum number of iterations or using a different optimization method in the `minimize` function.
 
 ## Additional Tips
