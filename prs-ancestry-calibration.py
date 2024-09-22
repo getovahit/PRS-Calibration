@@ -63,35 +63,46 @@ class PRSAncestryCalibration:
         return z_scores
 
 
-def load_data(prs_file, pc_file):
-    prs_data = pd.read_csv(prs_file)
-    pc_data = pd.read_csv(pc_file)
+def load_data(prs_file, pc_file, sample_col, prs_col, pc_col_prefix, sep):
+    prs_data = pd.read_csv(prs_file, sep=sep)
+    pc_data = pd.read_csv(pc_file, sep=sep)
 
     # Merge the data on 'sample_id' to ensure correct alignment
-    merged_data = pd.merge(prs_data, pc_data, on="sample_id")
+    merged_data = pd.merge(prs_data, pc_data, on=sample_col)
 
     # Extract PRS values
-    prs = merged_data["PRS"].values
+    prs = merged_data[prs_col].values
 
-    # Extract PC columns (assuming they are named 'PC1', 'PC2', ..., 'PCn')
-    pc_columns = [col for col in merged_data.columns if col.startswith("PC")]
+    # Extract PC columns
+    pc_columns = [col for col in merged_data.columns if col.startswith(pc_col_prefix)]
     if not pc_columns:
         raise ValueError("No PC columns found in the data.")
     pcs = merged_data[pc_columns].values
 
-    # Extract sample IDs
-    sample_ids = merged_data['sample_id'].values
+    # Extract all columns except PC columns
+    non_pc_columns = merged_data.drop(columns=pc_columns)
 
-    return prs, pcs, sample_ids
+    return prs, pcs, non_pc_columns
 
 
 @click.command()
 @click.option("--prs-file", help="Path to your PRS data file", default="prs_data.csv")
 @click.option("--pc-file", help="Path to your PCs data file", default="pc_data.csv")
 @click.option("--out-file", help="Output file", default="z_scores_output.csv")
-def main(prs_file, pc_file, out_file):
-    # Load your data
-    prs, pcs, sample_ids = load_data(prs_file, pc_file)
+@click.option("--sample-col", help="Sample column name", default="sample_id")
+@click.option("--prs-col", help="PRS column name", default="PRS")
+@click.option("--pc-col-prefix", help="PC column prefix", default="PC")
+@click.option("--delimiter", help="PC column prefix", default=",")
+def main(prs_file, pc_file, out_file, sample_col, prs_col, pc_col_prefix, delimiter):
+    # Load data
+    prs, pcs, output_df = load_data(
+        prs_file,
+        pc_file,
+        sample_col,
+        prs_col=prs_col,
+        pc_col_prefix=pc_col_prefix,
+        sep=delimiter,
+    )
 
     # Initialize and fit the model
     n_pcs = pcs.shape[1]  # Number of principal components
@@ -101,10 +112,10 @@ def main(prs_file, pc_file, out_file):
     # Calculate z-scores for individuals
     z_scores = prs_calibrator.calculate_z_score(prs, pcs)
 
-    # Output z-scores with sample IDs
-    output_df = pd.DataFrame(
-        {"sample_id": sample_ids, "z_score": z_scores}
-    )
+    # Add the z_score column to non_pc_data
+    output_df["z_score"] = z_scores
+
+    # Output the DataFrame to a CSV file
     output_df.to_csv(out_file, index=False)
     print(f"Z-scores have been saved to '{out_file}'.")
 
